@@ -2,19 +2,34 @@
 #include "Perceptron.h"
 #include <iostream>
 
-// The training data for the AND gate (4 examples)
-const std::vector<std::vector<double>> AND_INPUTS = {
+// // The training data for the AND gate (4 examples)
+// const std::vector<std::vector<double>> AND_INPUTS = {
+//     {0.0, 0.0},
+//     {0.0, 1.0},
+//     {1.0, 0.0},
+//     {1.0, 1.0}
+// };
+
+// const std::vector<int> AND_TARGETS = {
+//     0, // (0, 0) -> 0
+//     0, // (0, 1) -> 0
+//     0, // (1, 0) -> 0
+//     1  // (1, 1) -> 1
+// };
+
+// The training data for the XOR gate
+const std::vector<std::vector<double>> XOR_INPUTS = {
     {0.0, 0.0},
     {0.0, 1.0},
     {1.0, 0.0},
     {1.0, 1.0}
 };
 
-const std::vector<int> AND_TARGETS = {
+const std::vector<int> XOR_TARGETS = {
     0, // (0, 0) -> 0
-    0, // (0, 1) -> 0
-    0, // (1, 0) -> 0
-    1  // (1, 1) -> 1
+    1, // (0, 1) -> 1  <-- Different from AND
+    1, // (1, 0) -> 1  <-- Different from AND
+    0  // (1, 1) -> 0  <-- Different from AND
 };
 
 void test_perceptron() {
@@ -29,9 +44,12 @@ void test_perceptron() {
         int errors = 0;
         
         // Iterate over all training examples (inputs and targets)
-        for (size_t i = 0; i < AND_INPUTS.size(); ++i) {
-            const auto& inputs = AND_INPUTS[i];
-            int target = AND_TARGETS[i];
+        // for (size_t i = 0; i < AND_INPUTS.size(); ++i) {
+        //     const auto& inputs = AND_INPUTS[i];
+        //     int target = AND_TARGETS[i];
+        for (size_t i = 0; i < XOR_INPUTS.size(); ++i) {
+            const auto& inputs = XOR_INPUTS[i];
+            int target = XOR_TARGETS[i];
 
             // Train on one example
             model.train(inputs, target);
@@ -50,11 +68,24 @@ void test_perceptron() {
         }
     }
 
+    // // --- Testing (Verification) ---
+    // std::cout << "\n--- Final Test Results (AND Gate) ---" << std::endl;
+    // for (size_t i = 0; i < AND_INPUTS.size(); ++i) {
+    //     const auto& inputs = AND_INPUTS[i];
+    //     int target = AND_TARGETS[i];
+    //     int prediction = model.predict(inputs);
+
+    //     std::cout << "(" << inputs[0] << ", " << inputs[1] << ") -> Target: "
+    //               << target << ", Prediction: " << prediction
+    //               << (prediction == target ? " (CORRECT)" : " (INCORRECT!)")
+    //               << std::endl;
+    // }
+
     // --- Testing (Verification) ---
-    std::cout << "\n--- Final Test Results (AND Gate) ---" << std::endl;
-    for (size_t i = 0; i < AND_INPUTS.size(); ++i) {
-        const auto& inputs = AND_INPUTS[i];
-        int target = AND_TARGETS[i];
+    std::cout << "\n--- Final Test Results (XOR Gate) ---" << std::endl;
+    for (size_t i = 0; i < XOR_INPUTS.size(); ++i) {
+        const auto& inputs = XOR_INPUTS[i];
+        int target = XOR_TARGETS[i];
         int prediction = model.predict(inputs);
 
         std::cout << "(" << inputs[0] << ", " << inputs[1] << ") -> Target: "
