@@ -18,10 +18,10 @@ const std::vector<int> AND_TARGETS = {
 };
 
 void test_perceptron() {
-    // Perceptron for 2 inputs (x1, x2) and a learning rate of 0.1
-    Perceptron model(2, 0.1);
+    // Perceptron for 2 inputs (x1, x2) and a learning rate of 0.2
+    Perceptron model(2, 0.2);
 
-    int max_epochs = 100;
+    int max_epochs = 200;
     bool all_correct = false;
 
     // --- Training Loop ---
