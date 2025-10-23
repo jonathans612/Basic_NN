@@ -36,13 +36,16 @@ double Perceptron::weighted_sum(const std::vector<double>& inputs) const {
 // Private Helper: Activation Function (Unit Step)
 // ----------------------------------------------------
 int Perceptron::activation(double sum) const {
-    // Use a small epsilon (e.g., 1e-9) to handle floating-point
-    // arithmetic and ensure the boundary is not exactly at zero, which
-    // causes a prediction of 1 when the target is 0 for inputs (0,0), (0,1), etc.
-    const double EPSILON = 1e-9;
+    // Strictly greater than zero
+    return (sum >= 0.0) ? 1 : 0;
+
+    // // Use a small epsilon (e.g., 1e-9) to handle floating-point
+    // // arithmetic and ensure the boundary is not exactly at zero, which
+    // // causes a prediction of 1 when the target is 0 for inputs (0,0), (0,1), etc.
+    // const double EPSILON = 1e-9;
     
-    // Change the condition from (sum >= 0.0) to (sum > EPSILON)
-    return (sum > EPSILON) ? 1 : 0; 
+    // // Change the condition from (sum >= 0.0) to (sum > EPSILON)
+    // return (sum > EPSILON) ? 1 : 0; 
 }
 
 // ----------------------------------------------------
