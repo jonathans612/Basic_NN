@@ -1,5 +1,5 @@
 // main.cpp
-#include "NeuralNetwork.h"
+#include "Perceptron.h"
 #include <iostream>
 #include <vector>
 #include <string>
@@ -8,7 +8,7 @@
 // FLAG TO TOGGLE DATASET
 // Set to 1 for XOR, Set to 0 for AND
 // ====================================================
-#define USE_XOR 1
+#define USE_XOR 1 
 // ====================================================
 
 // --- 1. Dataset Definitions ---
@@ -49,57 +49,41 @@ void get_active_data(
 
 // --- 3. Perceptron Test Function ---
 
-// Rename function and update contents
-void test_neural_network() { 
+void test_perceptron() {
     // Pointers to hold the active data and title
     const std::vector<std::vector<double>>* current_inputs;
     const std::vector<int>* current_targets;
     std::string problem_title;
-    
+
+    // Get the data based on the flag
     get_active_data(current_inputs, current_targets, problem_title);
 
-    
-
-    // ------------------------------------------------------------------
-    // MLP Initialization: 2 inputs, 3 hidden neurons, 1 output neuron
-    NeuralNetwork model(2, 3, 1, 0.3); // Use a higher learning rate (0.5 is common for XOR)
-    // ------------------------------------------------------------------
-    
-    // Use many epochs for Backpropagation
-    int max_epochs = 50000;
-    
-    // Since the output is a continuous double (Sigmoid), we need a threshold
-    const double THRESHOLD = 0.5;
+    // Perceptron initialization
+    Perceptron model(2, 0.2); // Using 0.2 learning rate, 2 inputs
+    int max_epochs = 200;
+    bool all_correct = false;
 
     // --- Training Loop ---
-    for (int epoch = 1; epoch <= max_epochs; ++epoch) {
+    for (int epoch = 1; epoch <= max_epochs && !all_correct; ++epoch) {
         int errors = 0;
         
+        // Use the dereferenced pointers in the loop
         for (size_t i = 0; i < current_inputs->size(); ++i) {
             const auto& inputs = (*current_inputs)[i];
-            
-            // The target must be a vector of doubles for the MLP
-            std::vector<double> target_vec = { (double)(*current_targets)[i] }; 
+            int target = (*current_targets)[i];
 
-            model.train(inputs, target_vec); // Train
+            model.train(inputs, target);
 
-            // Prediction/Error check using forward()
-            double prediction = model.forward(inputs)[0];
-            int binary_prediction = (prediction >= THRESHOLD) ? 1 : 0;
-            int target = (int)target_vec[0];
-
-            if (binary_prediction != target) {
+            if (model.predict(inputs) != target) {
                 errors++;
             }
         }
 
-        if (epoch % 1000 == 0) { // Print progress every 1000 epochs
-            std::cout << "Epoch " << epoch << ": Errors = " << errors << std::endl;
-        }
+        std::cout << "Epoch " << epoch << ": Errors = " << errors << std::endl;
 
-        if (errors == 0 && epoch > 100) { // Check for convergence only after some training
-            std::cout << "\nTraining complete. Network converged in " << epoch << " epochs." << std::endl;
-            break;
+        if (errors == 0) {
+            all_correct = true;
+            std::cout << "\nTraining complete. Perceptron converged in " << epoch << " epochs." << std::endl;
         }
     }
 
@@ -107,30 +91,27 @@ void test_neural_network() {
     std::cout << "\n--- Final Test Results (" << problem_title << ") ---" << std::endl;
     for (size_t i = 0; i < current_inputs->size(); ++i) {
         const auto& inputs = (*current_inputs)[i];
-        int target = (int)(*current_targets)[i];
-        
-        double prediction_val = model.forward(inputs)[0];
-        int binary_prediction = (prediction_val >= THRESHOLD) ? 1 : 0;
+        int target = (*current_targets)[i];
+        int prediction = model.predict(inputs);
 
         std::cout << "(" << inputs[0] << ", " << inputs[1] << ") -> Target: "
-                  << target << ", Prediction: " << binary_prediction
-                  << " (Raw: " << prediction_val << ")" 
-                  << (binary_prediction == target ? " (CORRECT)" : " (INCORRECT!)")
+                  << target << ", Prediction: " << prediction
+                  << (prediction == target ? " (CORRECT)" : " (INCORRECT!)")
                   << std::endl;
     }
 }
 
-// Update the function call in main()
 int main() {
     try {
-        // Change the call to the new function name
-        test_neural_network(); 
+        test_perceptron();
     } catch (const std::exception& e) {
         std::cerr << "An error occurred: " << e.what() << std::endl;
+        // Keep the window open to read error message
         std::cout << "\nPress ENTER to exit..." << std::endl;
         std::cin.get(); 
         return 1;
     }
+    // Keep the window open to read results
     std::cout << "\nPress ENTER to exit..." << std::endl;
     std::cin.get(); 
     return 0;

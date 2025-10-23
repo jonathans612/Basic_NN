@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED True)
 # Source files for the executable
 set(SOURCE_FILES
     main.cpp
-    Perceptron.cpp
+    NeuralNetwork.cpp
 )
 
 # Create the executable
