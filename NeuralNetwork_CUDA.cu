@@ -155,6 +155,7 @@ void NeuralNetwork::cleanup_memory() {
     CUDA_CHECK(cudaFree(d_hidden_output_));
     CUDA_CHECK(cudaFree(d_input_buffer_));
     CUDA_CHECK(cudaFree(d_target_buffer_));
+    CUDA_CHECK(cudaFree(d_output_buffer_));
 }
 
 // --- (CONSTRUCTOR & DESTRUCTOR - THESE WERE MISSING) ---
@@ -177,6 +178,7 @@ NeuralNetwork::NeuralNetwork(int input_size, int hidden_size, int output_size, d
     CUDA_CHECK(cudaMalloc((void**)&d_hidden_output_, hidden_size_ * sizeof(double)));
     CUDA_CHECK(cudaMalloc((void**)&d_input_buffer_, input_size_ * sizeof(double)));
     CUDA_CHECK(cudaMalloc((void**)&d_target_buffer_, output_size_ * sizeof(double)));
+    CUDA_CHECK(cudaMalloc((void**)&d_output_buffer_, output_size_ * sizeof(double)));
 
     CUDA_CHECK(cudaMemcpy(d_w1_, h_w1_, w1_size_ * sizeof(double), cudaMemcpyHostToDevice));
     CUDA_CHECK(cudaMemcpy(d_b1_, h_b1_, hidden_size_ * sizeof(double), cudaMemcpyHostToDevice));
@@ -210,10 +212,11 @@ std::vector<double> NeuralNetwork::forward(const std::vector<double>& input) {
     dim3 threads_o(output_size_);
     forward_kernel_layer2<<<1, threads_o>>>(
         d_hidden_output_, d_w2_, d_b2_,
-        d_target_buffer_, 
+        d_output_buffer_, 
         hidden_size_, output_size_);
 
-    CUDA_CHECK(cudaMemcpy(output.data(), d_target_buffer_, output_size_ * sizeof(double), cudaMemcpyDeviceToHost));
+    // 4. Copy Output Data to Host (CPU)
+    CUDA_CHECK(cudaMemcpy(output.data(), d_output_buffer_, output_size_ * sizeof(double), cudaMemcpyDeviceToHost));    
     
     return output;
 }
@@ -234,14 +237,15 @@ void NeuralNetwork::train(const std::vector<double>& input, const std::vector<do
     dim3 threads_o(output_size_);
     forward_kernel_layer2<<<1, threads_o>>>(
         d_hidden_output_, d_w2_, d_b2_,
-        d_target_buffer_, 
+        d_output_buffer_,
         hidden_size_, output_size_);
     
+    // --- 3. Backward Pass & W2/B2 Update (Kernel 3) ---
     double* d_output_deltas;
     CUDA_CHECK(cudaMalloc((void**)&d_output_deltas, output_size_ * sizeof(double)));
     
     backprop_update_layer2<<<1, threads_o>>>(
-        d_target_buffer_, d_target_buffer_, d_hidden_output_,
+        d_target_buffer_, d_output_buffer_, d_hidden_output_,
         d_w2_, d_b2_,
         d_output_deltas, learning_rate_,
         hidden_size_, output_size_);

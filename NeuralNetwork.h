@@ -73,10 +73,12 @@ private:
     double* d_hidden_output_; // Output of hidden layer (a_j)
     double* d_input_buffer_;  // Buffer to hold input vector
     double* d_target_buffer_; // Buffer to hold target vector
+    double* d_output_buffer_; // Buffer for final network output
 
     // --- Private Helper Functions ---
     void initialize_host_weights();
     void cleanup_memory();
+    
 };
 
 #endif // NEURALNETWORK_H
