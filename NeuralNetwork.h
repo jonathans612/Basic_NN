@@ -1,4 +1,4 @@
-// NeuralNetwork.h
+// NeuralNetwork.h (Correct CUDA Version)
 #ifndef NEURALNETWORK_H
 #define NEURALNETWORK_H
 
@@ -6,6 +6,8 @@
 #include <cmath>
 #include <iostream>
 #include <random>
+#include <stdexcept> // Already present, but needed for runtime_error
+#include <string>    // <<< ADD THIS LINE for std::to_string
 
 // --- I. Math Utilities ---
 
@@ -23,42 +25,58 @@ inline double sigmoid_derivative(double x) {
     return s * (1.0 - s);
 }
 
+// CUDA Error Checking macro (necessary for the header as well)
+#define CUDA_CHECK(call)                                                          \
+{                                                                                 \
+    cudaError_t err = call;                                                       \
+    if (err != cudaSuccess) {                                                     \
+        throw std::runtime_error(std::string("CUDA Error at ") + __FILE__ + ":" + \
+                                 std::to_string(__LINE__) + " - " +              \
+                                 cudaGetErrorString(err));                        \
+    }                                                                             \
+}
+
 // ----------------------------------------------------
 // II. Neural Network Class Definition
 // ----------------------------------------------------
 class NeuralNetwork {
 public:
-    // Constructor: Define network structure (e.g., [2, 4, 1] means 2 inputs, 4 hidden, 1 output)
     NeuralNetwork(int input_size, int hidden_size, int output_size, double learning_rate);
+    ~NeuralNetwork(); // <<< Crucial for cleaning GPU memory
 
-    // Forward Propagation
     std::vector<double> forward(const std::vector<double>& input);
-
-    // Training (Forward + Backpropagation + Weight Update)
     void train(const std::vector<double>& input, const std::vector<double>& target);
 
 private:
-    // Network structure and parameters
+    // --- Configuration and Sizes ---
     int input_size_;
     int hidden_size_;
     int output_size_;
     double learning_rate_;
+    
+    size_t w1_size_; 
+    size_t w2_size_;
 
-    // Weights: W1 (Input->Hidden), W2 (Hidden->Output)
-    std::vector<std::vector<double>> w1_; // Matrix of size (input_size x hidden_size)
-    std::vector<std::vector<double>> w2_; // Matrix of size (hidden_size x output_size)
+    // --- Host (CPU) Pointers (for initialization and final results) ---
+    double* h_w1_;
+    double* h_b1_;
+    double* h_w2_;
+    double* h_b2_;
+    
+    // --- Device (GPU) Pointers (The core memory) ---
+    double* d_w1_; // Weights: Input -> Hidden
+    double* d_b1_; // Biases: Hidden Layer
+    double* d_w2_; // Weights: Hidden -> Output
+    double* d_b2_; // Biases: Output Layer
 
-    // Biases: B1 (Hidden), B2 (Output)
-    std::vector<double> b1_; 
-    std::vector<double> b2_;
+    // --- Device (GPU) Activation/Cache Buffers ---
+    double* d_hidden_output_; // Output of hidden layer (a_j)
+    double* d_input_buffer_;  // Buffer to hold input vector
+    double* d_target_buffer_; // Buffer to hold target vector
 
-    // Storage for intermediate results during forward pass (needed for backprop)
-    std::vector<double> hidden_activations_; // Net input (z) to hidden layer
-    std::vector<double> hidden_outputs_;     // Activation output (a) from hidden layer
-    std::vector<double> output_activations_; // Net input (z) to output layer
-
-    // Initialization helper
-    void initialize_weights();
+    // --- Private Helper Functions ---
+    void initialize_host_weights();
+    void cleanup_memory();
 };
 
 #endif // NEURALNETWORK_H
